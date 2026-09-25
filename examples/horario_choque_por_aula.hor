@@ -1,0 +1,17 @@
+HORARIO {
+    CURSOS {
+        curso: "Lenguajes Formales y de Programacion" [codigo: "LFP-0796", creditos: 4],
+        curso: "Bases de Datos 2" [codigo: "BD2-0812", creditos: 5],
+    };
+    CATEDRATICOS {
+        catedratico: "Otto Rodriguez" [codigo: "DOC-001", categoria: TITULAR],
+        catedratico: "Vivian Campos" [codigo: "DOC-002", categoria: INTERINO],
+    };
+    AULAS {
+        aula: "AUL-101" [capacidad: 40, edificio: "T-3"],
+    };
+    CLASES {
+        clase: "LFP-0796" con "DOC-001" en "AUL-101" [dia: MARTES, inicio: 09:00, fin: 10:30, seccion: "N"],
+        clase: "BD2-0812" con "DOC-002" en "AUL-101" [dia: MARTES, inicio: 10:00, fin: 11:30, seccion: "B"],
+    };
+};

@@ -1,0 +1,10 @@
+HORARIO {
+    CURSOS {
+    };
+    CATEDRATICOS {
+    };
+    AULAS {
+    };
+    CLASES {
+    };
+};
