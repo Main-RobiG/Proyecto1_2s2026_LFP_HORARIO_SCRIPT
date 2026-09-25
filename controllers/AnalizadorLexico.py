@@ -134,3 +134,41 @@ class AnalizadorLexico:
         self._avanzar()
         self._registrar_error(c, CARACTER_NO_RECONOCIDO, linea_inicio, columna_inicio)
         return self.siguiente_token()  # sigue buscando el proximo token valido
+    
+    # ---------------------------------------------------------------
+    # Sub-automatas por tipo de token
+    # ---------------------------------------------------------------
+
+    def _leer_comentario_o_error(self):
+            
+        linea_inicio = self.linea
+        columna_inicio = self.columna
+        self._avanzar()  # consume el primer '#'
+
+        if self._actual() != "#":
+            # '#' suelto: no es un comentario valido.
+            self._registrar_error("#", CARACTER_NO_RECONOCIDO, linea_inicio, columna_inicio)
+            return None
+
+        self._avanzar()  # consume el segundo '#'
+        lexema = "##"
+        while self._actual() is not None and self._actual() != "\n":
+            lexema += self._actual()
+            self._avanzar()
+        # No consumimos el '\n' aqui; el bucle principal lo hara.
+        return self._crear_token(lexema, "COMENTARIO_LINEA", linea_inicio, columna_inicio)
+
+    def _leer_cadena(self, linea_inicio, columna_inicio):
+        """Estado q_cadena. Por decision B: todo lo que va entre comillas es CADENA."""
+        self._avanzar()  # consume la comilla de apertura
+        lexema = ""
+        while True:
+            c = self._actual()
+            if c is None or c == "\n":
+                self._registrar_error(lexema, CADENA_SIN_CERRAR, linea_inicio, columna_inicio)
+                return self.siguiente_token()
+            if c == '"':
+                self._avanzar()  # consume la comilla de cierre
+                return self._crear_token(lexema, "CADENA", linea_inicio, columna_inicio)
+            lexema += c
+            self._avanzar()
