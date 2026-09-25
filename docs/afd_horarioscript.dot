@@ -1,0 +1,55 @@
+digraph AFD_HorarioScript {
+    rankdir=LR;
+    node [shape=circle, fontname="Helvetica", fontsize=11];
+    edge [fontname="Helvetica", fontsize=9];
+
+    q0 [shape=doublecircle, label="q0\n(inicial)"];
+    q_ident [label="q_ident"];
+    q_ident_dash [label="q_ident\n_dash"];
+    q_ident_dash_dig [label="q_ident\n_dash_dig", shape=doublecircle];
+    q_num [label="q_num"];
+    q_num2 [label="q_num2", shape=doublecircle];
+    q_hora_c [label="q_hora_c"];
+    q_hora_m1 [label="q_hora_m1"];
+    q_hora_m2 [label="q_hora_m2", shape=doublecircle];
+    q_hash1 [label="q_hash1"];
+    q_comentario [label="q_comentario", shape=doublecircle];
+    q_cadena [label="q_cadena", shape=doublecircle];
+
+    q0 -> q0 [label="espacio / \\n\n(ignora)"];
+    q0 -> q_ident [label="letra"];
+    q0 -> q_num [label="digito"];
+    q0 -> q_cadena [label="\""];
+    q0 -> q_hash1 [label="#"];
+    q0 -> q0 [label="{ } [ ] : , ;\n(acepta SIMBOLO)", style=dashed];
+    q0 -> q0 [label="otro\n(error CARACTER_NO_RECONOCIDO)", style=dotted, color=red, fontcolor=red];
+
+    q_ident -> q_ident [label="letra / digito"];
+    q_ident -> q_ident_dash [label="-"];
+    q_ident -> q0 [label="delimitador\n(clasifica: reservada / DIA / CATEGORIA / error)"];
+
+    q_ident_dash -> q_ident_dash_dig [label="digito"];
+    q_ident_dash -> q0 [label="letra / delimitador\n(error CODIGO_MAL_FORMADO)", color=red, fontcolor=red];
+
+    q_ident_dash_dig -> q_ident_dash_dig [label="digito"];
+    q_ident_dash_dig -> q0 [label="delimitador\n(acepta CODIGO)"];
+
+    q_num -> q_num2 [label="2do digito"];
+    q_num -> q0 [label="delimitador\n(acepta ENTERO 1 cifra)"];
+    q_num2 -> q_hora_c [label=":"];
+    q_num2 -> q_num2 [label="digito\n(sigue ENTERO)"];
+    q_num2 -> q0 [label="delimitador\n(acepta ENTERO)"];
+
+    q_hora_c -> q_hora_m1 [label="digito"];
+    q_hora_m1 -> q_hora_m2 [label="digito"];
+    q_hora_m2 -> q0 [label="delimitador\n(valida rango: HORA o\nerror HORA_FUERA_DE_RANGO)"];
+
+    q_hash1 -> q_comentario [label="#"];
+    q_hash1 -> q0 [label="otro\n(error CARACTER_NO_RECONOCIDO)", color=red, fontcolor=red];
+    q_comentario -> q_comentario [label="!= \\n"];
+    q_comentario -> q0 [label="\\n / EOF\n(acepta COMENTARIO_LINEA)"];
+
+    q_cadena -> q_cadena [label="!= \" , != \\n"];
+    q_cadena -> q0 [label="\"\n(acepta CADENA)"];
+    q_cadena -> q0 [label="\\n / EOF\n(error CADENA_SIN_CERRAR)", color=red, fontcolor=red];
+}
