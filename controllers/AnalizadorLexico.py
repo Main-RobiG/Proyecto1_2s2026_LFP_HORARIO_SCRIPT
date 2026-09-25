@@ -140,7 +140,7 @@ class AnalizadorLexico:
     # ---------------------------------------------------------------
 
     def _leer_comentario_o_error(self):
-            
+
         linea_inicio = self.linea
         columna_inicio = self.columna
         self._avanzar()  # consume el primer '#'
@@ -172,3 +172,91 @@ class AnalizadorLexico:
                 return self._crear_token(lexema, "CADENA", linea_inicio, columna_inicio)
             lexema += c
             self._avanzar()
+
+
+    # ---------------------------------------------------------------
+    # Reconocimiento de identificadores, palabras reservadas y codigos
+    # (decisiones A y C del manual tecnico)
+    # ---------------------------------------------------------------
+
+    def _leer_identificador(self, linea_inicio, columna_inicio):
+      
+        lexema = self._actual()
+        self._avanzar()
+
+        # Primero consumimos letras/digitos "normales" (parte alfanumerica).
+        while _es_letra(self._actual()) or _es_digito(self._actual()):
+            lexema += self._actual()
+            self._avanzar()
+
+        if self._actual() == "-":
+            # q_ident_dash: posible CODIGO tipo letras(+digitos)-digitos
+            return self._leer_codigo_con_guion(lexema, linea_inicio, columna_inicio)
+
+        # No hay guion: clasificar contra palabras reservadas / enums.
+        return self._clasificar_identificador_simple(lexema, linea_inicio, columna_inicio)
+
+    def _leer_codigo_con_guion(self, prefijo, linea_inicio, columna_inicio):
+        """Decision C: patron flexible letras(+digitos)-digitos, sin comillas."""
+        lexema = prefijo + "-"
+        self._avanzar()  # consume el '-'
+
+        digitos = ""
+        while _es_digito(self._actual()):
+            digitos += self._actual()
+            lexema += self._actual()
+            self._avanzar()
+
+        # Si tras los digitos viene otro guion o una letra pegada, el
+        # patron letras(-digitos) se rompe: seguimos consumiendo hasta el
+        # delimitador para reportar el lexema completo, pero es error.
+        malformado = len(digitos) == 0
+        while _es_letra(self._actual()) or self._actual() == "-":
+            malformado = True
+            lexema += self._actual()
+            self._avanzar()
+            while _es_digito(self._actual()):
+                lexema += self._actual()
+                self._avanzar()
+
+        if malformado:
+            self._registrar_error(lexema, CODIGO_MAL_FORMADO, linea_inicio, columna_inicio)
+            return self.siguiente_token()
+
+        return self._crear_token(lexema, "CODIGO", linea_inicio, columna_inicio)
+
+    def _clasificar_identificador_simple(self, lexema, linea_inicio, columna_inicio):
+
+        if lexema in PR_BLOQUE:
+            tipo = "PR_BLOQUE"
+        elif lexema in PR_ELEMENTO:
+            tipo = "PR_ELEMENTO"
+        elif lexema in PR_RELACION:
+            tipo = "PR_RELACION"
+        elif lexema in PR_ATRIBUTO:
+            tipo = "PR_ATRIBUTO"
+        elif lexema in DIA_VALIDOS:
+            tipo = "DIA"
+        elif lexema in CATEGORIA_VALIDOS:
+            tipo = "CATEGORIA"
+        else:
+            # No es ninguna palabra reservada ni enum conocido.
+            if self.ultimo_atributo == "dia":
+                self._registrar_error(lexema, DIA_NO_RECONOCIDO, linea_inicio, columna_inicio)
+            else:
+                self._registrar_error(lexema, CODIGO_MAL_FORMADO, linea_inicio, columna_inicio)
+            return self.siguiente_token()
+
+        tok = self._crear_token(lexema, tipo, linea_inicio, columna_inicio)
+
+        # Actualizamos la "memoria" de contexto solo con PR_ATRIBUTO.
+        if tipo == "PR_ATRIBUTO":
+            self.ultimo_atributo = lexema
+        else:
+            # Cualquier otro token "cierra" el contexto del atributo previo,
+            # salvo ':' que es el separador natural entre atributo y valor.
+            if not (tipo == "SIMBOLO" and lexema == ":"):
+                self.ultimo_atributo = None
+
+        return tok
+    
