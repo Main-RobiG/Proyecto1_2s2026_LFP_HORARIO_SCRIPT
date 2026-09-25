@@ -1,5 +1,8 @@
 import os
 import tkinter as tk
+import webbrowser
+from controllers.GestorChoques import GestorChoques
+from controllers.GeneradorReportes import GeneradorReportes
 from tkinter import filedialog, messagebox, ttk
 
 from controllers.AnalizadorLexico import AnalizadorLexico
@@ -22,8 +25,8 @@ class Interfaz:
     # ---------------------------------------------------------------
     # Construccion de widgets
     # ---------------------------------------------------------------
-
     def _construir_barra_superior(self):
+        
         barra = tk.Frame(self.ventana)
         barra.pack(fill="x", padx=10, pady=10)
 
@@ -38,9 +41,13 @@ class Interfaz:
         )
         self.boton_analizar.pack(side="left", padx=10)
 
+        self.boton_reportes = tk.Button(
+            barra, text="Generar reportes HTML", command=self._generar_reportes, state="disabled"
+        )
+        self.boton_reportes.pack(side="left", padx=10)
+
         self.etiqueta_resumen = tk.Label(barra, text="", fg="blue")
         self.etiqueta_resumen.pack(side="left", padx=10)
-
     def _construir_tablas(self):
         paneles = tk.Frame(self.ventana)
         paneles.pack(fill="both", expand=True, padx=10, pady=(0, 10))
@@ -128,6 +135,7 @@ class Interfaz:
             text=f"Tokens: {len(self.tokens)}   Errores: {len(self.errores)}"
         )
         self._llenar_tablas()
+        self.boton_reportes.config(state="normal")
 
     def _llenar_tablas(self):
         self.tabla_tokens.delete(*self.tabla_tokens.get_children())
@@ -140,3 +148,17 @@ class Interfaz:
                 "", "end",
                 values=(err.numero, err.lexema, err.tipo, err.descripcion, err.linea, err.columna),
             )
+            
+    def _generar_reportes(self):
+        gestor = GestorChoques(self.tokens)
+        modelo = gestor.analizar()
+
+        generador = GeneradorReportes(carpeta_salida="reportes")
+        rutas = generador.generar_todos(modelo, self.errores)
+
+        mensaje = f"Reportes generados en la carpeta 'reportes/':\n" + "\n".join(rutas.values())
+        if modelo["choques"]:
+            mensaje += f"\n\n¡Atencion! Se detectaron {len(modelo['choques'])} choque(s) de horario."
+        messagebox.showinfo("Reportes generados", mensaje)
+
+        webbrowser.open(f"file://{os.path.abspath(rutas['horario'])}")
