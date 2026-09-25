@@ -5,8 +5,8 @@ Analizador léxico para el lenguaje
 **HorarioScript**, con interfaz gráfica en Tkinter, detección de
 choques de horario y generación de reportes HTML.
 
-**Autor(a):** [Sergio Roberto Gudiel Sian]
-**Carné:** [201404365]
+**Autor(a):** Sergio Roberto Gudiel Sian
+**Carné:** 201404365
 **Curso / Sección:** Lenguajes Formales de Programación, Sección N
 
 ## Descripción del proyecto
@@ -42,7 +42,6 @@ Se abrirá la interfaz gráfica. Pasos dentro de la aplicación:
    automáticamente), abriendo el primero en el navegador.
 
 ## Estructura del proyecto
-
 ```
 ├── main.py # Punto de entrada de la aplicacion
 ├── models/
@@ -59,6 +58,7 @@ Se abrirá la interfaz gráfica. Pasos dentro de la aplicación:
 ├── docs/ # Manual Tecnico y Manual de Usuario
 └── reportes/ # Salida generada (ignorada por git)
 ```
+
 
 ## Tipos de token reconocidos
 
