@@ -84,3 +84,53 @@ class AnalizadorLexico:
 
     def _registrar_error(self, lexema, tipo, linea_inicio, columna_inicio, mensaje=None):
         self.gestor_errores.registrar(lexema, tipo, linea_inicio, columna_inicio, mensaje)
+        
+    # ---------------------------------------------------------------
+    # Nucleo del AFD
+    # ---------------------------------------------------------------
+
+    def siguiente_token(self):
+
+        while True:
+            c = self._actual()
+
+            if c is None:
+                return None  # EOF
+
+            if _es_espacio(c) or c == "\n":
+                self._avanzar()
+                continue
+
+            if c == "#":
+                # Puede ser inicio de comentario "##" o un '#' suelto (error).
+                token_comentario = self._leer_comentario_o_error()
+                if token_comentario is not None:
+                    return token_comentario
+                # Si _leer_comentario_o_error devolvio None fue un error de
+                # caracter suelto ya registrado; seguimos buscando el
+                # siguiente token real.
+                continue
+
+            break  # c es el inicio de un token "de verdad"
+
+        linea_inicio = self.linea
+        columna_inicio = self.columna
+        c = self._actual()
+
+        if c == '"':
+            return self._leer_cadena(linea_inicio, columna_inicio)
+
+        if _es_letra(c):
+            return self._leer_identificador(linea_inicio, columna_inicio)
+
+        if _es_digito(c):
+            return self._leer_numero_u_hora(linea_inicio, columna_inicio)
+
+        if c in SIMBOLOS:
+            self._avanzar()
+            return self._crear_token(c, "SIMBOLO", linea_inicio, columna_inicio)
+
+        # Cualquier otro caracter no encaja en ningun patron valido.
+        self._avanzar()
+        self._registrar_error(c, CARACTER_NO_RECONOCIDO, linea_inicio, columna_inicio)
+        return self.siguiente_token()  # sigue buscando el proximo token valido
