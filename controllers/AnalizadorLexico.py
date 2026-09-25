@@ -259,4 +259,59 @@ class AnalizadorLexico:
                 self.ultimo_atributo = None
 
         return tok
-    
+    # ---------------------------------------------------------------
+    # Reconocimiento de numeros y horas (ENTERO vs HORA)
+    # ---------------------------------------------------------------
+
+    def _leer_numero_u_hora(self, linea_inicio, columna_inicio):
+        """Estados q_num / q_num2 / q_hora_*. Decide entre ENTERO y HORA."""
+        primer_digito = self._actual()
+        self._avanzar()
+
+        # Solo un digito seguido de algo que no es digito -> ENTERO de 1 cifra.
+        if not _es_digito(self._actual()):
+            return self._crear_token(primer_digito, "ENTERO", linea_inicio, columna_inicio)
+
+        segundo_digito = self._actual()
+        self._avanzar()
+        dos_digitos = primer_digito + segundo_digito
+
+        if self._actual() == ":":
+            return self._leer_hora(dos_digitos, linea_inicio, columna_inicio)
+
+        # No es hora: seguimos consumiendo digitos como ENTERO (3+ cifras).
+        lexema = dos_digitos
+        while _es_digito(self._actual()):
+            lexema += self._actual()
+            self._avanzar()
+
+        return self._crear_token(lexema, "ENTERO", linea_inicio, columna_inicio)
+
+    def _leer_hora(self, horas_str, linea_inicio, columna_inicio):
+        """Valida el rango 06:00-21:00 (decision D: HORA_FUERA_DE_RANGO)."""
+        lexema = horas_str + ":"
+        self._avanzar()  # consume ':'
+
+        minutos = ""
+        while _es_digito(self._actual()) and len(minutos) < 2:
+            minutos += self._actual()
+            lexema += self._actual()
+            self._avanzar()
+
+        if len(minutos) != 2:
+            # Formato incompleto (por ejemplo "07:5" seguido de delimitador).
+            self._registrar_error(
+                lexema, HORA_FUERA_DE_RANGO, linea_inicio, columna_inicio,
+                mensaje=f"Formato de hora invalido: '{lexema}' en linea {linea_inicio}, columna {columna_inicio}.",
+            )
+            return self.siguiente_token()
+
+        horas = int(horas_str)
+        mins = int(minutos)
+        valor = (horas, mins)
+
+        if valor < HORA_MIN or valor > HORA_MAX:
+            self._registrar_error(lexema, HORA_FUERA_DE_RANGO, linea_inicio, columna_inicio)
+            return self.siguiente_token()
+
+        return self._crear_token(lexema, "HORA", linea_inicio, columna_inicio)
