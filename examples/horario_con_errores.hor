@@ -1,0 +1,16 @@
+HORARIO {
+    CURSOS {
+        curso: "Curso de prueba" [codigo: LFP-0796, creditos: 4] @,
+    };
+    CATEDRATICOS {
+        catedratico: "Sin cerrar la cadena [codigo: "DOC-005", categoria: TITULAR],
+    };
+    AULAS {
+        aula: "AUL-9" [capacidad: 30, edificio: "T-1"],
+    };
+    CLASES {
+        clase: "LFP-0796" con "DOC-005" en "AUL-9" [dia: DOMINGO, inicio: 07:00, fin: 08:40, seccion: "N"],
+        clase: "LFP-0796" con "DOC-005" en "AUL-9" [dia: LUNES, inicio: 25:00, fin: 08:40, seccion: "N"],
+        clase: "LFP-0796" con DOC-9-9 en "AUL-9" [dia: LUNES, inicio: 07:00, fin: 08:40, seccion: "N"],
+    };
+};
